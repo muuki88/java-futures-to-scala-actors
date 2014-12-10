@@ -2,6 +2,7 @@ package services.scala
 
 import scala.language.{ postfixOps }
 import scala.util.Random.{ nextLong, nextInt, nextDouble }
+import scala.collection.immutable.Seq
 
 case class Item(id: String, client: Int, price: Double)
 
@@ -19,4 +20,22 @@ class ItemService {
     result
   }
 
+}
+
+class FlakyItemService extends ItemService {
+  
+  /**
+   * creates random errors plus a stable error for clientId == 2
+   */
+  override def getItems(client: Int) : Seq[Item] = {
+    val result = super.getItems(client)
+    
+    // flakiness
+    if(nextDouble < 0.2 || client == 2) {
+      throw new IllegalStateException(s"Something went wrong for client $client")
+    }
+    
+    result
+  }
+  
 }
