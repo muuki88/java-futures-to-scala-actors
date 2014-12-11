@@ -24,7 +24,7 @@ class SummaryServiceTest extends TestKit(ActorSystem("SummaryService"))
     // --------------------------------------
 
     "created with a stable item service" must {
-      val summaryService = new SummaryService(new ItemService)
+      val summaryService = new SummaryService(new ItemService, system)
 
       "return an empty list for no client" in {
 
@@ -36,7 +36,7 @@ class SummaryServiceTest extends TestKit(ActorSystem("SummaryService"))
         }
       }
 
-      "return a single list for one client" ignore {
+      "return a single list for one client" in {
         val clientId = 1
         val itemsFuture = summaryService numberOfItems List(clientId)
 
@@ -47,7 +47,7 @@ class SummaryServiceTest extends TestKit(ActorSystem("SummaryService"))
         }
       }
 
-      "return a single list for multiple clients" ignore {
+      "return a single list for multiple clients" in {
         val clientIds = 1 :: 2 :: 3 :: Nil
         val productsFuture = summaryService numberOfItems clientIds
 
@@ -66,7 +66,7 @@ class SummaryServiceTest extends TestKit(ActorSystem("SummaryService"))
     // --------------------------------------
 
     "created with a flaky item service" must {
-      val summaryService = new SummaryService(new FlakyItemService)
+      val summaryService = new SummaryService(new FlakyItemService, system)
 
       "return an empty list for no client" ignore {
         val itemsFuture = summaryService numberOfItems Nil
@@ -85,7 +85,7 @@ class SummaryServiceTest extends TestKit(ActorSystem("SummaryService"))
         }
       }
 
-      "return a single list for multiple clients" ignore {
+      "return a multiple list for multiple clients" ignore {
         val clientIds = 1 :: 2 :: 3 :: Nil
         val itemsFuture = summaryService numberOfItems clientIds
 
@@ -94,7 +94,6 @@ class SummaryServiceTest extends TestKit(ActorSystem("SummaryService"))
 
           items foreach { item =>
             clientIds should contain(item.clientId)
-            item.num > 0 should be(true)
           }
         }
       }
@@ -105,25 +104,26 @@ class SummaryServiceTest extends TestKit(ActorSystem("SummaryService"))
 
   "A summary service actor" must {
 
-    val testActor: ActorRef = null
+    val testActor: ActorRef = system.actorOf(Props[SummaryServiceActor])
 
-    "handle GetNumberOfItems(Nil) requests" ignore {
-      testActor ! "GetNumberOfItems(Nil)"
+    "handle GetNumberOfItems(Nil) requests" in {
+      testActor ! SummaryServiceActor.GetNumberOfItems(Nil)
 
       val items: List[NumberOfItems] = expectMsgType[List[NumberOfItems]]
       items should be(empty)
     }
 
-    "handle GetNumberOfItems(1 :: Nil) requests" ignore {
-      testActor ! "GetNumberOfItems(1 :: Nil)"
+    "handle GetNumberOfItems(1 :: Nil) requests" in {
+      testActor ! SummaryServiceActor.GetNumberOfItems(1 :: Nil)
 
       val items: List[NumberOfItems] = expectMsgType[List[NumberOfItems]]
       items should have size(1)
+      items(0).clientId should be(1)
     }
     
     
-    "handle GetNumberOfItems(1 :: 2 :: 3 :: Nil) requests" ignore {
-      testActor ! "GetNumberOfItems(1 :: 2 :: 3 :: Nil)"
+    "handle GetNumberOfItems(1 :: 2 :: 3 :: Nil) requests" in {
+      testActor ! SummaryServiceActor.GetNumberOfItems(1 :: 2 :: 3 :: Nil)
 
       val items: List[NumberOfItems] = expectMsgType[List[NumberOfItems]]
       items should have size(3)
